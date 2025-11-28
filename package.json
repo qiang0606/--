@@ -1,0 +1,27 @@
+{
+  "name": "chathub-monorepo",
+  "version": "1.0.0",
+  "description": "类似微信的聊天系统，支持账号托管功能",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:client": "pnpm --filter client-frontend dev",
+    "dev:backend": "pnpm --filter backend start:dev",
+    "dev": "pnpm run dev:backend & pnpm run dev:frontend & pnpm run dev:client",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:client": "pnpm --filter client-frontend build",
+    "build:backend": "pnpm --filter backend build",
+    "build": "pnpm run build:backend && pnpm run build:frontend && pnpm run build:client"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
+
