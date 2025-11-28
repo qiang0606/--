@@ -70,19 +70,44 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
     @MessageBody() data: { conversationId: string; content: string },
   ) {
-    const message = await this.chatService.sendMessage(
-      data.conversationId,
-      client.data.userId,
-      client.data.username,
-      '',
-      data.content,
-    )
-
-    // 获取对话信息，找到所有参与者
+    // 获取对话信息，确定发送者信息
     const conversation = await this.chatService.getConversationById(data.conversationId)
     if (!conversation) {
       return
     }
+
+    let senderId = client.data.userId
+    let senderName = client.data.username
+    let senderAvatar = ''
+
+    // 如果是管理端用户，且对话有托管账号，使用托管账号信息作为发送者
+    if (client.data.userType === 'manager' && conversation.managedAccountId) {
+      const managedAccount = await this.chatService.getManagedAccountById(
+        conversation.managedAccountId.toString()
+      )
+      if (managedAccount) {
+        senderId = managedAccount._id.toString()
+        senderName = managedAccount.nickname
+        senderAvatar = managedAccount.avatar || ''
+      }
+    } else if (client.data.userType === 'client') {
+      // 如果是客户端用户，获取客户端用户信息
+      const clientUser = await this.chatService.getClientUserById(client.data.userId)
+      if (clientUser) {
+        senderId = clientUser._id.toString()
+        senderName = clientUser.nickname
+        senderAvatar = clientUser.avatar || ''
+      }
+    }
+
+    // 发送消息
+    const message = await this.chatService.sendMessage(
+      data.conversationId,
+      senderId,
+      senderName,
+      senderAvatar,
+      data.content,
+    )
 
     // 发送消息给对话的所有参与者（客户端用户）
     const participants = conversation.participants || []

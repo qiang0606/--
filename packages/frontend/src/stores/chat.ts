@@ -35,25 +35,37 @@ export const useChatStore = defineStore('chat', () => {
     return messageList
   }
 
-  // 发送消息
+  // 发送消息（通过 WebSocket）
   const sendMessage = async (content: string, conversationId?: string) => {
     const targetId = conversationId || currentConversation.value?.id
     if (!targetId) return
 
-    const message = await chatApi.sendMessage({
+    // 通过 WebSocket 发送消息
+    socketService.emit('message', {
       conversationId: targetId,
       content,
     })
-    messages.value.push(message)
-    return message
+    
+    // 注意：消息会通过 WebSocket 的 'message' 事件返回，不需要在这里添加
+    // 这样可以确保消息实时同步到所有参与者
   }
 
   // 接收消息（通过 WebSocket）
   const receiveMessage = (message: Message) => {
-    messages.value.push(message)
-    // 如果不在当前对话，增加未读数
-    if (message.conversationId !== currentConversation.value?.id) {
+    // 如果消息属于当前对话，添加到消息列表
+    if (message.conversationId === currentConversation.value?.id) {
+      messages.value.push(message)
+    } else {
+      // 如果不在当前对话，增加未读数并更新对话列表
       unreadCount.value++
+      const conversation = conversations.value.find(
+        (c) => c.id === message.conversationId
+      )
+      if (conversation) {
+        conversation.lastMessage = message.content
+        conversation.lastMessageTime = message.timestamp || new Date().toISOString()
+        conversation.unreadCount = (conversation.unreadCount || 0) + 1
+      }
     }
   }
 

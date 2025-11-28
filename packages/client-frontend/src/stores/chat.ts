@@ -37,17 +37,19 @@ export const useChatStore = defineStore("chat", () => {
     return messageList;
   };
 
-  // 发送消息
+  // 发送消息（通过 WebSocket）
   const sendMessage = async (content: string, conversationId?: string) => {
     const targetId = conversationId || currentConversation.value?.id;
     if (!targetId) return;
 
-    const message = await chatApi.sendMessage({
+    // 通过 WebSocket 发送消息
+    socketService.emit("message", {
       conversationId: targetId,
       content,
     });
-    messages.value.push(message);
-    return message;
+
+    // 注意：消息会通过 WebSocket 的 'message' 事件返回，不需要在这里添加
+    // 这样可以确保消息实时同步到所有参与者
   };
 
   // 接收消息（通过 WebSocket）

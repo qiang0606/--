@@ -8,6 +8,7 @@ import { Conversation, ConversationSchema } from '../entities/conversation.schem
 import { Message, MessageSchema } from '../entities/message.schema'
 import { UserFriend, UserFriendSchema } from '../entities/user-friend.schema'
 import { ManagedAccount, ManagedAccountSchema } from '../entities/managed-account.schema'
+import { ClientUser, ClientUserSchema } from '../entities/client-user.schema'
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ManagedAccount, ManagedAccountSchema } from '../entities/managed-accoun
       { name: Message.name, schema: MessageSchema },
       { name: UserFriend.name, schema: UserFriendSchema },
       { name: ManagedAccount.name, schema: ManagedAccountSchema },
+      { name: ClientUser.name, schema: ClientUserSchema },
     ]),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'chathub-secret-key',

@@ -5,6 +5,7 @@ import { Conversation, ConversationDocument } from '../entities/conversation.sch
 import { Message, MessageDocument } from '../entities/message.schema'
 import { UserFriend, UserFriendDocument } from '../entities/user-friend.schema'
 import { ManagedAccount, ManagedAccountDocument } from '../entities/managed-account.schema'
+import { ClientUser, ClientUserDocument } from '../entities/client-user.schema'
 
 @Injectable()
 export class ChatService {
@@ -17,6 +18,8 @@ export class ChatService {
     private userFriendModel: Model<UserFriendDocument>,
     @InjectModel(ManagedAccount.name)
     private managedAccountModel: Model<ManagedAccountDocument>,
+    @InjectModel(ClientUser.name)
+    private clientUserModel: Model<ClientUserDocument>,
   ) {}
 
   async getConversations(userId: string, managedAccountId?: string, userType?: 'manager' | 'client'): Promise<any[]> {
@@ -153,10 +156,18 @@ export class ChatService {
       await conversation.save()
     }
 
+    // 返回完整的消息对象，确保包含所有必要字段
+    const messageObj = savedMessage.toObject()
     return {
-      ...savedMessage.toObject(),
-      id: savedMessage._id.toString(),
-      conversationId: savedMessage.conversationId.toString(),
+      id: messageObj._id.toString(),
+      conversationId: messageObj.conversationId.toString(),
+      senderId: messageObj.senderId,
+      senderName: messageObj.senderName,
+      senderAvatar: messageObj.senderAvatar || '',
+      content: messageObj.content,
+      type: messageObj.type || 'text',
+      timestamp: messageObj.timestamp ? new Date(messageObj.timestamp).toISOString() : new Date().toISOString(),
+      read: messageObj.read || false,
     }
   }
 
@@ -184,5 +195,13 @@ export class ChatService {
       return null
     }
     return account.ownerId.toString()
+  }
+
+  async getManagedAccountById(managedAccountId: string): Promise<ManagedAccountDocument | null> {
+    return this.managedAccountModel.findById(managedAccountId).exec()
+  }
+
+  async getClientUserById(clientUserId: string): Promise<ClientUserDocument | null> {
+    return this.clientUserModel.findById(clientUserId).exec()
   }
 }
